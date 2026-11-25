@@ -1,11 +1,33 @@
-// main.js – Homepage: beliebte Filme laden (FR009) und als Karten anzeigen (FR011)
+// main.js – Homepage: beliebte Filme (FR009), Karten (FR011), Favoriten (FR012)
 // TMDB_API_KEY und escapeHTML() kommen aus header.js (wird vorher geladen)
 
 const movieGrid = document.getElementById("movie-grid");
 const IMAGE_BASE_URL = "https://image.tmdb.org/t/p/w342";
 const NO_IMAGE_URL = "https://placehold.co/342x513/334155/ffffff?text=No+Image";
 
-// FR009: Beliebte Filme von der TMDB-API holen
+// Hier merken wir uns die geladenen Filme
+let popularMovies = [];
+
+// --------------------------------
+// FR012: Favoriten im localStorage
+// --------------------------------
+
+// Alle Favoriten als Array holen (leeres Array, falls noch keine da sind)
+function getFavourites() {
+  return JSON.parse(localStorage.getItem("favourites")) || [];
+}
+
+function saveFavourites(favourites) {
+  localStorage.setItem("favourites", JSON.stringify(favourites));
+}
+
+function isFavourite(movieId) {
+  return getFavourites().some((movie) => movie.id === movieId);
+}
+
+// --------------------------------
+// FR009: Beliebte Filme laden
+// --------------------------------
 async function loadPopularMovies() {
   movieGrid.innerHTML = `<p class="text-gray-300 col-span-full">Loading popular movies...</p>`;
 
@@ -19,19 +41,21 @@ async function loadPopularMovies() {
     }
 
     const data = await response.json();
-    renderMovies(data.results);
+    popularMovies = data.results;
+    renderMovies(popularMovies);
   } catch (error) {
     movieGrid.innerHTML = `<p class="text-red-400 col-span-full">Movies could not be loaded. Please try again.</p>`;
     console.error(error);
   }
 }
 
-// FR011: Filmkarten in das Raster schreiben
+// --------------------------------
+// FR011: Filmkarten
+// --------------------------------
 function renderMovies(movies) {
   movieGrid.innerHTML = movies.map(createMovieCard).join("");
 }
 
-// Eine Karte mit Bild, Titel und Infos
 function createMovieCard(movie) {
   const poster = movie.poster_path
     ? `${IMAGE_BASE_URL}${movie.poster_path}`
@@ -41,6 +65,7 @@ function createMovieCard(movie) {
   const overview = escapeHTML(
     movie.overview || "No description available.",
   ).slice(0, 150);
+  const alreadyAdded = isFavourite(movie.id);
 
   return `
     <article class="movie-card bg-slate-800 text-white rounded-2xl
@@ -58,10 +83,53 @@ function createMovieCard(movie) {
         <p class="text-sm text-gray-400">${year} · ⭐ ${rating}</p>
         <p class="text-sm text-gray-300">${overview}</p>
 
-        <!-- Platz für den Button "Add to favourites" (FR012) -->
+        <!-- FR012: Button "Add to favourites" -->
+        <button
+          class="add-favourite-btn mt-auto bg-yellow-400
+                 hover:bg-yellow-500 text-slate-900 font-bold
+                 rounded-full px-4 py-2 transition
+                 disabled:opacity-60 disabled:cursor-not-allowed"
+          data-movie-id="${movie.id}"
+          ${alreadyAdded ? "disabled" : ""}>
+          ${alreadyAdded ? "In favourites ✓" : "Add to favourites"}
+        </button>
       </div>
     </article>
   `;
 }
+
+// --------------------------------
+// FR012: Klick auf "Add to favourites"
+// --------------------------------
+movieGrid.addEventListener("click", (event) => {
+  const button = event.target.closest(".add-favourite-btn");
+
+  if (!button) {
+    return;
+  }
+
+  const movieId = Number(button.dataset.movieId);
+  const movie = popularMovies.find((item) => item.id === movieId);
+
+  if (!movie || isFavourite(movieId)) {
+    return;
+  }
+
+  // Film als Objekt speichern, "note" ist für FR014 (Notizen) vorbereitet
+  const favourites = getFavourites();
+  favourites.push({
+    id: movie.id,
+    title: movie.title,
+    poster_path: movie.poster_path,
+    release_date: movie.release_date,
+    vote_average: movie.vote_average,
+    overview: movie.overview,
+    note: "",
+  });
+  saveFavourites(favourites);
+
+  button.textContent = "In favourites ✓";
+  button.disabled = true;
+});
 
 loadPopularMovies();
