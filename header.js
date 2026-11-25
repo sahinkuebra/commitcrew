@@ -28,7 +28,7 @@ headerContainer.innerHTML = `
             Homepage
           </a>
 
-          <a href="index2.html"
+          <a href="journal.html"
              class="hover:text-yellow-400 transition">
             My Favorites
           </a>
