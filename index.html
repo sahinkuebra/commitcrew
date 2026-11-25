@@ -13,9 +13,19 @@
     <!-- Gemeinsamer Header -->
     <div id="site-header"></div>
 
-    <!-- Dein bestehender Homepage-Inhalt kommt hierhin -->
+    <!-- Homepage-Inhalt: beliebte Filme -->
+    <main class="max-w-6xl mx-auto px-5 py-8">
+      <h1 class="text-3xl font-bold text-white mb-6">Popular Movies</h1>
+      <div
+        id="movie-grid"
+        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+      ></div>
+    </main>
 
-    <!-- Header JavaScript -->
+    <!-- Header JavaScript (muss vor main.js geladen werden) -->
     <script src="header.js"></script>
+
+    <!-- Homepage JavaScript -->
+    <script src="main.js"></script>
   </body>
 </html>
